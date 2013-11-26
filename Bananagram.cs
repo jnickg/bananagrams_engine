@@ -31,10 +31,7 @@ namespace Bananagrams
         /// </summary>
         private Dictionary<char, int> letters;
         private String pname;
-
-        // Fix this shite; might need to make child class that has "down" and
-        // "right" adjacents???
-        private AdjacencyGraph<char, IEdge<char>> words;
+        protected TileGrid tiles;
 
         /// <summary>
         /// Static constructor--later versions will read tiles from a
@@ -167,7 +164,7 @@ namespace Bananagrams
         {
             pname = name;
             letters = new Dictionary<char,int>();
-            words = new AdjacencyGraph<char, IEdge<char>>();
+            tiles = new TileGrid();
         }
 
         ~Bananagram()
@@ -178,10 +175,17 @@ namespace Bananagrams
         /// <summary>
         /// Adds new tiles to a player's letters pile
         /// </summary>
-        /// <param name="NuTil">The letters to be added</param>
-        public void addTiles(List<char> NuTil)
+        /// <param name="NuLtr">The letters to be added</param>
+        public void addLetters(List<char> NuLtr)
         {
-
+            int tmp; // Used below to store # of particular letter
+            foreach (char c in NuLtr)
+            {
+                // Increment the number of letters for c
+                tmp = letters[c];
+                ++tmp;
+                letters.Add(c, tmp);
+            }
         }
 
         /// <summary>
