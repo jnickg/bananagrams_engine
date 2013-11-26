@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -18,7 +19,7 @@ namespace Bananagrams
         ///     the number of players currently in the game
         ///     whether the game has started
         /// </summary>
-        public static Dictionary<char, int> bananabag;
+        public static ConcurrentBag<char> bananabag;
         public static List<Bananagram> players;
         public static int nplay;
         public static bool gstart;
@@ -41,37 +42,57 @@ namespace Bananagrams
         /// </summary>
         static Bananagram()
         {
-            bananabag.Add('A', 13);
-            bananabag.Add('B', 3);
-            bananabag.Add('C', 3);
-            bananabag.Add('D', 6);
-            bananabag.Add('E', 18);
-            bananabag.Add('F', 3);
-            bananabag.Add('G', 4);
-            bananabag.Add('H', 3);
-            bananabag.Add('I', 12);
-            bananabag.Add('J', 2);
-            bananabag.Add('K', 2);
-            bananabag.Add('L', 5);
-            bananabag.Add('M', 3);
-            bananabag.Add('N', 8);
-            bananabag.Add('O', 11);
-            bananabag.Add('P', 3);
-            bananabag.Add('Q', 2);
-            bananabag.Add('R', 9);
-            bananabag.Add('S', 6);
-            bananabag.Add('T', 9);
-            bananabag.Add('U', 6);
-            bananabag.Add('V', 3);
-            bananabag.Add('W', 3);
-            bananabag.Add('X', 2);
-            bananabag.Add('Y', 3);
-            bananabag.Add('Z', 2);
+            bananabag = LoadStdAlphabet(); // Standard alphabet hard-coded, loadable w/o file IOs
 
             nplay = 0;
             players = new List<Bananagram>();
 
             gstart = false;
+        }
+
+        /// <summary>
+        /// Loads the Bananagram standard alphabet without file interactions
+        /// </summary>
+        private static ConcurrentBag<char> LoadStdAlphabet()
+        {
+            ConcurrentBag<char> rtn;
+
+            //Hashtable tmp = new Hashtable();
+            Dictionary<char, int> tmp = new Dictionary<char, int>();
+            tmp.Add('A', 13);
+            tmp.Add('B', 3);
+            tmp.Add('C', 3);
+            tmp.Add('D', 6);
+            tmp.Add('E', 18);
+            tmp.Add('F', 3);
+            tmp.Add('G', 4);
+            tmp.Add('H', 3);
+            tmp.Add('I', 12);
+            tmp.Add('J', 2);
+            tmp.Add('K', 2);
+            tmp.Add('L', 5);
+            tmp.Add('M', 3);
+            tmp.Add('N', 8);
+            tmp.Add('O', 11);
+            tmp.Add('P', 3);
+            tmp.Add('Q', 2);
+            tmp.Add('R', 9);
+            tmp.Add('S', 6);
+            tmp.Add('T', 9);
+            tmp.Add('U', 6);
+            tmp.Add('V', 3);
+            tmp.Add('W', 3);
+            tmp.Add('X', 2);
+            tmp.Add('Y', 3);
+            tmp.Add('Z', 2);
+
+            rtn = new ConcurrentBag<char>();
+
+            foreach (char c in tmp.Keys)
+                for (int i = 0; i < tmp[c]; ++i)
+                    rtn.Add(c);
+
+            return rtn;
         }
 
         /// <summary>
