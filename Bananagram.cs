@@ -19,19 +19,19 @@ namespace Bananagrams
         ///     the number of players currently in the game
         ///     whether the game has started
         /// </summary>
-        public static ConcurrentBag<char> bananabag;
-        public static List<Bananagram> players;
-        public static int nplay;
-        public static bool gstart;
-
+        public static ConcurrentBag<char> bunch; // Undrawn letters from the game
+        public static List<Bananagram> players; // Players are instances of this class
+        public static int nplay; // The number of players
+        public static bool gstart; // Whether the game has started
+        
         /// <summary>
         /// Every instance of Bananagram is one player, each of whom has:
-        ///     a collection of letters, drawn from bananabag
+        ///     a collection of letters, drawn from bunch
         ///     a name
         /// </summary>
-        private Dictionary<char, int> letters;
-        private String pname;
-        protected TileGrid tiles;
+        private Dictionary<char, int> letters; // A player's letters drawn from the bunch
+        private String pname; // The name of the player
+        protected TileGraph tiles; // Their board of placed letters
 
         /// <summary>
         /// Static constructor--later versions will read tiles from a
@@ -39,7 +39,7 @@ namespace Bananagrams
         /// </summary>
         static Bananagram()
         {
-            bananabag = LoadStdAlphabet(); // Standard alphabet hard-coded, loadable w/o file IOs
+            bunch = LoadStdAlphabet(); // Standard alphabet hard-coded, loadable w/o file IOs
 
             nplay = 0;
             players = new List<Bananagram>();
@@ -93,26 +93,26 @@ namespace Bananagrams
         }
 
         /// <summary>
-        /// Draws one letter from bananabag for the game manager to give to
+        /// Draws one letter from bunch for the game manager to give to
         /// the player
         /// </summary>
-        /// <returns>A letter from bananabag</returns>
+        /// <returns>A letter from bunch</returns>
         public static char Peel()
         {
-            // Get a char from bananabag; reduce its count
+            // Get a char from bunch; reduce its count
             // Return it
             return ' ';
         }
 
         /// <summary>
-        /// Returns an undesired letter, adding it to the bananabag, and
+        /// Returns an undesired letter, adding it to the bunch, and
         /// draws three more letters to give to the player
         /// </summary>
         /// <param name="d">The letter to be returned</param>
         /// <returns>A list of new letters to replace d</returns>
         public static List<char> Dump(char d)
         {
-            // Add each char in d back to bananabag; increase their count
+            // Add each char in d back to bunch; increase their count
             // return Peel() x 3
             return null;
         }
@@ -164,7 +164,7 @@ namespace Bananagrams
         {
             pname = name;
             letters = new Dictionary<char,int>();
-            tiles = new TileGrid();
+            tiles = new TileGraph();
         }
 
         ~Bananagram()
