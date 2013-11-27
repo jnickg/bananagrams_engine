@@ -1,54 +1,62 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Bananagrams;
 
 namespace Bananagrams
 {
-    class Tile
+    /// <summary>
+    /// The Tile Graph stores several tiles and uses the
+    /// Bananagram static class to check words from the
+    /// loaded dictionary for the game in which it was
+    /// made. The Tile class is contained in a separate
+    /// file and contains a char, and all of its
+    /// adjacent letters.
+    /// 
+    /// Every player has one Tile Grid.
+    /// 
+    /// The structure of the graph ("Tiles" aka nodes & edges)
+    /// are defined below.
+    /// </summary>
+    class TileGraph
     {
-        private char ltr; // The letter of this tile
+        
+    } // End of TileGraph class
 
-        // Adjacency pointers: up, down, left, right
-        private Tile adj_u;
-        private Tile adj_d;
-        private Tile adj_l;
-        private Tile adj_r;
+    /// <summary>
+    /// The node of the TileGraph, called Tile
+    /// 
+    /// Each tile will be linked to up to four other
+    /// 'adjacent' tiles, which exist regardless of distance,
+    /// IFF there is a tile precisely in any straight direction
+    /// from it. The weight of the edge (below) represents the
+    /// tile distance, meaning that truly adjacent tiles will have
+    /// an edge weight of 1.
+    /// 
+    /// Each tile has two validation flags, representing whether
+    /// that tile has been checked for being part of a valid word,
+    /// in the vertical and horizontal direction. Each tile also has
+    /// two visitation flags for the purpose of TileGraph traversal.
+    /// All of these flags are initialized to false.
+    /// 
+    /// Each tile must have a letter.
+    /// </summary>
+    internal class Tile
+    {
+        char ltr; // The letter of the tile
+        edge[] adj; // 0=up, 1=right, 2=down, 3=left
+        bool[] val; // Validated flags (0=vertical, 1=horizontal)
+        bool[] vis; // Visited flags (0=vertical, 1=horizontal)
 
-        private Tile Up
-        {
-            get
-            {
-                return adj_u;
-            }
-            set
-            {
-                adj_u = value;
-            }
-        }
-
-        // Traversal flags
-        private bool val_v; // vertical validated flag
-        private bool val_h; // horizontal
-        private bool vis_v; // vertical visited flag
-        private bool vis_h; // horizontal
-
-        /// <summary>
-        /// Every tile MUST contain a letter
-        /// </summary>
-        /// <param name="l">The letter of the tile</param>
         public Tile(char l)
         {
             ltr = l;
-
-            // All adjacent are null
-            adj_u = adj_d =
-            adj_l = adj_r = null;
-
-            // All flags invalid
-            val_v = val_h = false;
-            vis_v = vis_h = false;
+            adj = new edge[4];
+            val = new bool[2];
+            vis = new bool[2];
         }
 
         /// <summary>
@@ -61,9 +69,10 @@ namespace Bananagrams
         /// <returns>The next adjacent tile in the vertical direction</returns>
         public Tile visit_v(out char l)
         {
-            vis_v = true;
+            vis[0] = true;
             l = ltr;
-            return adj_r;
+            if (1 != adj[1].weight) return null;
+            else return adj[1].dest;
         }
 
         /// <summary>
@@ -76,9 +85,10 @@ namespace Bananagrams
         /// <returns>The next adjacent tile in the horizontal direction</returns>
         public Tile visit_h(out char l)
         {
-            vis_h = true;
+            vis[1] = true;
             l = ltr;
-            return adj_d;
+            if (1 != adj[2].weight) return null;
+            else return adj[2].dest;
         }
 
         /// <summary>
@@ -88,7 +98,7 @@ namespace Bananagrams
         /// <returns>Whether it's been visited.</returns>
         public bool is_visited_v()
         {
-            return vis_v;
+            return vis[0];
         }
 
         /// <summary>
@@ -98,7 +108,33 @@ namespace Bananagrams
         /// <returns>Whether it's been visited.</returns>
         public bool is_visited_h()
         {
-            return vis_h;
+            return vis[1];
+        }
+
+        /// <summary>
+        /// Recursively calls itself until an adjacent tile
+        /// is found that itself has no adjacent tiles, in
+        /// the vertical direction.
+        /// </summary>
+        /// <returns>The head tile of the word in the vertical direction</returns>
+        public Tile get_head_v()
+        {
+            if (1 != adj[0].weight)
+                return this;
+            else return adj[0].dest.get_head_v();
+        }
+
+        /// <summary>
+        /// Recursively calls itself until an adjacent tile
+        /// is found that itself has no adjacent tiles, in
+        /// the horizontal direction.
+        /// </summary>
+        /// <returns>The head tile of the word in the horizontal direction</returns>
+        public Tile get_head_h()
+        {
+            if (1 != adj[3].weight)
+                return this;
+            else return adj[3].dest.get_head_h();
         }
 
         /// <summary>
@@ -110,7 +146,7 @@ namespace Bananagrams
         /// <returns>Whether it is part of a word</returns>
         public bool is_word_v()
         {
-            return ((!(null == adj_u)) || (!(null == adj_d)));
+            return ((1 == adj[0].weight) || (1 == adj[2].weight));
         }
 
         /// <summary>
@@ -122,33 +158,7 @@ namespace Bananagrams
         /// <returns>Whether it is part of a word</returns>
         public bool is_word_h()
         {
-            return ((!(null == adj_l)) || (!(null == adj_r)));
-        }
-
-        /// <summary>
-        /// Recursively calls itself until an adjacent tile
-        /// is found that itself has no adjacent tiles, in
-        /// the vertical direction.
-        /// </summary>
-        /// <returns>The head tile of the word in the vertical direction</returns>
-        public Tile get_head_v()
-        {
-            if (null == adj_u)
-                return this;
-            else return adj_u.get_head_v();
-        }
-
-        /// <summary>
-        /// Recursively calls itself until an adjacent tile
-        /// is found that itself has no adjacent tiles, in
-        /// the horizontal direction.
-        /// </summary>
-        /// <returns>The head tile of the word in the horizontal direction</returns>
-        public Tile get_head_h()
-        {
-            if (null == adj_l)
-                return this;
-            else return adj_l.get_head_h();
+            return ((1 == adj[3].weight) || (1 == adj[1].weight));
         }
 
         /// <summary>
@@ -196,7 +206,7 @@ namespace Bananagrams
         /// </summary>
         public void validate_v()
         {
-            val_v = true;
+            val[0] = true;
         }
 
         /// <summary>
@@ -204,7 +214,7 @@ namespace Bananagrams
         /// </summary>
         public void validate_h()
         {
-            val_h = true;
+            val[1] = true;
         }
 
         /// <summary>
@@ -214,7 +224,7 @@ namespace Bananagrams
         /// <returns>Whether it has been validated.</returns>
         public bool is_valid_v()
         {
-            return val_v;
+            return val[0];
         }
 
         /// <summary>
@@ -224,7 +234,32 @@ namespace Bananagrams
         /// <returns>Whether it has been validated.</returns>
         public bool is_valid_h()
         {
-            return val_h;
+            return val[1];
         }
-    }
+    } // End of Tile class
+
+    /// <summary>
+    /// The monodirectional edges of each Tile. "dest" represents
+    /// to the Tile to which the edge points, and weight represents
+    /// its simulated physical distance from the adjacent tile.
+    /// 
+    /// Truly adjacent tiles will have a weight of 1, while tiles with
+    /// a gap between them will have a weight equal to the number of
+    /// tiels that could fit in between them.
+    /// 
+    /// Weight is initialized to 0, meaning any non-1 weight represents
+    /// an edge pointing either to nothing or to something not truly
+    /// adjacent.
+    /// </summary>
+    internal struct edge
+    {
+        public Tile dest; // points to the edge's destination
+        public int weight; // the distance between 'adjacent' tiles
+
+        public edge()
+        {
+            dest = null;
+            weight = 0;
+        }
+    } // End of edge struct
 }
