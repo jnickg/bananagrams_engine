@@ -18,187 +18,300 @@ namespace Bananagrams
     /// 
     /// Every player has one Tile Grid.
     /// 
-    /// The structure of the graph ("Tiles" aka nodes & edges)
-    /// are defined below.
+    /// The structure structure of the Tile is also defined
+    /// within this file
     /// </summary>
     class TileGraph
     {
+        Tile[,] graph; // Actual 2d array of tiles, for TileGraph to manage
         
+        /// <summary>
+        /// These values represent the x- and y-coordinates of the
+        /// currently-selected tile. Value 0,0 represents the top left
+        /// corner of the graph; higher x values down; higher y values
+        /// to the right.
+        /// </summary>
+        int sel_x, sel_y; // The x and y coordinate of the selected tile;
+
+        public TileGraph(int nt)
+        {
+            // Place in approximate center
+            sel_x = nt/2;
+            sel_y = nt/2;
+
+            graph = new Tile[nt, nt];
+        }
+
+        /// <summary>
+        /// One of the elementary moves. Assigns tile
+        /// of graph[x,y] to value l, if the tile is
+        /// unused. Returns whether it was successful.
+        /// </summary>
+        /// <param name="l">The letter</param>
+        /// <param name="x">x-index of the tile</param>
+        /// <param name="y">y-index of the tile</param>
+        /// <returns>True if the tile was placed, false if that tile space was used</returns>
+        private bool e_place(char l, int x, int y)
+        {
+            if (graph[x, y].IsUsed) return false;
+            else
+            {
+                graph[x, y].ltr_put(l);
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// One of the elementary moves. Resets tile of
+        /// graph[x,y] to "unused" value. Returns the
+        /// value of the tile that was there
+        /// </summary>
+        /// <param name="x">x-index of the tile</param>
+        /// <param name="y">y-index of the tile</param>
+        /// <returns>The character removed</returns>
+        private char e_rmv(int x, int y)
+        {
+            return graph[x, y].ltr_rmv();
+        }
+
+        /// <summary>
+        /// One of the elementary moves. Attempts to
+        /// move the tile at graph[x,y] up one space,
+        /// returning its success.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        private bool e_move_u(int x, int y)
+        {
+            if (graph[x, y - 1].IsUsed) return false;
+            else
+            {
+                char tmp = graph[x, y].ltr_rmv();
+                graph[x, y - 1].ltr_put(tmp);
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// One of the elementary moves. Attempts to
+        /// move the tile at graph[x,y] down one space,
+        /// returning its success.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        private bool e_move_d(int x, int y)
+        {
+            if (graph[x, y + 1].IsUsed) return false;
+            else
+            {
+                char tmp = graph[x, y].ltr_rmv();
+                graph[x, y + 1].ltr_put(tmp);
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// One of the elementary moves. Attempts to
+        /// move the tile at graph[x,y] left one space,
+        /// returning its success.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        private bool e_move_l(int x, int y)
+        {
+            if (graph[x - 1, y].IsUsed) return false;
+            else
+            {
+                char tmp = graph[x, y].ltr_rmv();
+                graph[x - 1, y].ltr_put(tmp);
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// One of the elementary moves. Attempts to
+        /// move the tile at graph[x,y] right one space,
+        /// returning its success.
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        private bool e_move_r(int x, int y)
+        {
+            if (graph[x + 1, y].IsUsed) return false;
+            else
+            {
+                char tmp = graph[x, y].ltr_rmv();
+                graph[x + 1, y].ltr_put(tmp);
+                return true;
+            }
+        }
+        
+        /// <summary>
+        /// Attempts to slide a column of tiles up
+        /// from base tile graph[x,y].
+        /// </summary>
+        /// <param name="x">x-coordinate of the column</param>
+        /// <param name="y">y-coordinate of the base of the column</param>
+        /// <returns>The number of tiles moved</returns>
+        public int slide_up(int x, int y)
+        {
+            if (graph[x, y].IsUnused) return 0;
+            else
+            {
+                int y2 = y;
+                int num_slid = 0;
+
+                // Attempt to slide tiles up higher and higher until
+                // One is able to slide
+                while (!e_move_u(x, y2))
+                    --y2;
+
+                // Slide all tiles from first successful slide
+                // back down to y
+                do //while(e_move_u(x, y2) && y2>y);
+                {
+                    ++y2;
+                    ++num_slid;
+                } while(e_move_u(x, y2) && y2<=y);
+
+                return num_slid;
+            }
+        }
+
     } // End of TileGraph class
 
-    /// <summary>
-    /// The node of the TileGraph, called Tile
-    /// 
-    /// Each tile will be linked to up to four other
-    /// 'adjacent' tiles, which exist regardless of distance,
-    /// IFF there is a tile precisely in any straight direction
-    /// from it. The weight of the edge (below) represents the
-    /// tile distance, meaning that truly adjacent tiles will have
-    /// an edge weight of 1.
-    /// 
-    /// Each tile has two validation flags, representing whether
-    /// that tile has been checked for being part of a valid word,
-    /// in the vertical and horizontal direction. Each tile also has
-    /// two visitation flags for the purpose of TileGraph traversal.
-    /// All of these flags are initialized to false.
-    /// 
-    /// Each tile must have a letter.
-    /// </summary>
+
     internal class Tile
     {
         char ltr; // The letter of the tile
-        edge[] adj; // 0=up, 1=right, 2=down, 3=left
         bool[] val; // Validated flags (0=vertical, 1=horizontal)
         bool[] vis; // Visited flags (0=vertical, 1=horizontal)
 
-        public Tile(char l)
+
+        public bool IsUsed
         {
-            ltr = l;
-            adj = new edge[4];
+            get
+            {
+                return (!(ltr == '\0'));
+            }
+        }
+
+        public bool IsUnused
+        {
+            get
+            {
+                return ((ltr == '\0'));
+            }
+        }
+
+        public bool IsVisited_V
+        {
+            get
+            {
+                if (this.IsUsed) return vis[0];
+                else return true;
+            }
+        }
+
+        public bool IsVisited_H
+        {
+            get
+            {
+                if (this.IsUsed) return vis[1];
+                else return true;
+            }
+        }
+
+        public bool IsValid_V
+        {
+            get
+            {
+                if(this.IsUsed) return val[0];
+                else return true;
+            }
+        }
+
+        public bool IsValid_H
+        {
+            get
+            {
+                if (this.IsUsed) return val[1];
+                else return true;
+            }
+        }
+
+        public Tile()
+        {
+            ltr = '\0';
             val = new bool[2];
             vis = new bool[2];
+            
         }
 
         /// <summary>
-        /// Spits out the tile's current letter to l, while
-        /// returning a pointer to the next adjacent tile in
-        /// the vertical direction. Return will be null if 
-        /// it is the last tile in that direction.
+        /// Assigns the tile to contain a "used" value, resetting
+        /// all flags as well.
         /// </summary>
-        /// <param name="l">Gets assigned to this tile's letter</param>
-        /// <returns>The next adjacent tile in the vertical direction</returns>
-        public Tile visit_v(out char l)
+        /// <param name="l">The letter to which Tile will be assigned</param>
+        public void ltr_put(char l)
+        {
+            ltr = l;
+            this.reset_flags();
+        }
+
+        /// <summary>
+        /// Resets the tile to the "unused" value.
+        /// This indicates to the Tile that it is not used,
+        /// and will ensure all other properties return
+        /// false regardless of their internal state.
+        /// <returns>The letter previously present</returns>
+        /// </summary>
+        public char ltr_rmv()
+        {
+            if (this.IsUsed)
+            {
+                char rtn = ltr;
+                ltr = '\0';
+                return rtn;
+            }
+            else return ltr;
+        }
+
+        /// <summary>
+        /// Swaps out existing tile with another existing
+        /// one, resetting all validation flags as well.
+        /// equivalent to executing ltr_rmv() and ltr_put(l)
+        /// without resetting flags both times.
+        /// </summary>
+        /// <param name="l">The new letter</param>
+        /// <returns>The letter previously present</returns>
+        public char ltr_swap(char l)
+        {
+            char rtn = ltr;
+            ltr = l;
+            this.reset_flags();
+            return rtn;
+        }
+
+        /// <summary>
+        /// If this tile is considered "used" it will flag
+        /// the tile as visited
+        /// </summary>
+        /// <returns></returns>
+        public char visit_v()
         {
             vis[0] = true;
-            l = ltr;
-            if (1 != adj[1].weight) return null;
-            else return adj[1].dest;
+            return ltr;
         }
 
-        /// <summary>
-        /// Spits out the tile's current letter to l, while
-        /// returning a pointer to the next adjacent tile in
-        /// the horizontal direction. Return will be null if 
-        /// it is the last tile in that direction.
-        /// </summary>
-        /// <param name="l">Gets assigned to this tile's letter</param>
-        /// <returns>The next adjacent tile in the horizontal direction</returns>
-        public Tile visit_h(out char l)
+        public char visit_h()
         {
-            vis[1] = true;
-            l = ltr;
-            if (1 != adj[2].weight) return null;
-            else return adj[2].dest;
-        }
-
-        /// <summary>
-        /// Returns whether the tile has been visited in the
-        /// vertical direction.
-        /// </summary>
-        /// <returns>Whether it's been visited.</returns>
-        public bool is_visited_v()
-        {
-            return vis[0];
-        }
-
-        /// <summary>
-        /// Returns whether the tile has been visited in the
-        /// horizontal direction.
-        /// </summary>
-        /// <returns>Whether it's been visited.</returns>
-        public bool is_visited_h()
-        {
-            return vis[1];
-        }
-
-        /// <summary>
-        /// Recursively calls itself until an adjacent tile
-        /// is found that itself has no adjacent tiles, in
-        /// the vertical direction.
-        /// </summary>
-        /// <returns>The head tile of the word in the vertical direction</returns>
-        public Tile get_head_v()
-        {
-            if (1 != adj[0].weight)
-                return this;
-            else return adj[0].dest.get_head_v();
-        }
-
-        /// <summary>
-        /// Recursively calls itself until an adjacent tile
-        /// is found that itself has no adjacent tiles, in
-        /// the horizontal direction.
-        /// </summary>
-        /// <returns>The head tile of the word in the horizontal direction</returns>
-        public Tile get_head_h()
-        {
-            if (1 != adj[3].weight)
-                return this;
-            else return adj[3].dest.get_head_h();
-        }
-
-        /// <summary>
-        /// Returns true if there is either a tile preceding
-        /// or proceeding this one, in the vertical direction.
-        /// Does not check whether the word is valid, only
-        /// whether it is part of a word.
-        /// </summary>
-        /// <returns>Whether it is part of a word</returns>
-        public bool is_word_v()
-        {
-            return ((1 == adj[0].weight) || (1 == adj[2].weight));
-        }
-
-        /// <summary>
-        /// Returns true if there is either a tile preceding
-        /// or proceeding this one, in the horizontal direction.
-        /// Does not check whether the word is valid, only
-        /// whether it is part of a word.
-        /// </summary>
-        /// <returns>Whether it is part of a word</returns>
-        public bool is_word_h()
-        {
-            return ((1 == adj[3].weight) || (1 == adj[1].weight));
-        }
-
-        /// <summary>
-        /// Finds the head tile for this one, in the vertical
-        /// direction, visits each following tile until there
-        /// are no more, and returns a string representing the
-        /// entire vertical word which this tile is a part of.
-        /// </summary>
-        /// <returns>A string representation of the word.</returns>
-        public String get_word_v()
-        {
-            char l;
-            StringBuilder rtn = new StringBuilder();
-            Tile tmp = this.get_head_v();
-            while (!(null == tmp))
-            {
-                tmp = tmp.visit_v(out l);
-                rtn.Append(l);
-            }
-            return rtn.ToString();
-        }
-
-        /// <summary>
-        /// Finds the head tile for this one, in the horizontal
-        /// direction, visits each following tile until there
-        /// are no more, and returns a string representing the
-        /// entire horizontal word which this tile is a part of.
-        /// </summary>
-        /// <returns>A string representation of the word.</returns>
-        public String get_word_h()
-        {
-            char l;
-            StringBuilder rtn = new StringBuilder();
-            Tile tmp = this.get_head_h();
-            while (!(null == tmp))
-            {
-                tmp = tmp.visit_h(out l);
-                rtn.Append(l);
-            }
-            return rtn.ToString();
+            vis[1] = true; // Protects against accidental visitation
+            return ltr;
         }
 
         /// <summary>
@@ -217,49 +330,13 @@ namespace Bananagrams
             val[1] = true;
         }
 
-        /// <summary>
-        /// Returns whether this tile has been validated
-        /// in the vertical direction.
-        /// </summary>
-        /// <returns>Whether it has been validated.</returns>
-        public bool is_valid_v()
+        private void reset_flags()
         {
-            return val[0];
-        }
-
-        /// <summary>
-        /// Returns whether this tile has been validated
-        /// in the horizontal direction.
-        /// </summary>
-        /// <returns>Whether it has been validated.</returns>
-        public bool is_valid_h()
-        {
-            return val[1];
+            val[0] = false;
+            val[1] = false;
+            vis[0] = false;
+            vis[1] = false;
         }
     } // End of Tile class
 
-    /// <summary>
-    /// The monodirectional edges of each Tile. "dest" represents
-    /// to the Tile to which the edge points, and weight represents
-    /// its simulated physical distance from the adjacent tile.
-    /// 
-    /// Truly adjacent tiles will have a weight of 1, while tiles with
-    /// a gap between them will have a weight equal to the number of
-    /// tiels that could fit in between them.
-    /// 
-    /// Weight is initialized to 0, meaning any non-1 weight represents
-    /// an edge pointing either to nothing or to something not truly
-    /// adjacent.
-    /// </summary>
-    internal struct edge
-    {
-        public Tile dest; // points to the edge's destination
-        public int weight; // the distance between 'adjacent' tiles
-
-        public edge()
-        {
-            dest = null;
-            weight = 0;
-        }
-    } // End of edge struct
 }
