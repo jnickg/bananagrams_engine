@@ -19,7 +19,7 @@ namespace Bananagrams
         ///     the number of players currently in the game
         ///     whether the game has started
         /// </summary>
-        public static ConcurrentBag<char> bunch; // Undrawn letters from the game
+        private static ConcurrentBag<char> bunch; // Undrawn letters from the game
         public static List<Bananagram> players; // Players are instances of this class
         public static int nplay; // The number of players
         public static bool gstart; // Whether the game has started
@@ -164,7 +164,7 @@ namespace Bananagrams
         {
             pname = name;
             letters = new Dictionary<char,int>();
-            tiles = new TileGraph();
+            tiles = new TileGraph(Bananagram.);
         }
 
         ~Bananagram()
